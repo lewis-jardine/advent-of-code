@@ -1,3 +1,4 @@
+# import math
 from itertools import combinations
 
 # INPUT = "test_input.txt"
@@ -29,39 +30,47 @@ def _get_antenna_locations(map: Map) -> AntennaLocations:
     return locations
 
 
-def _find_unique_antinodes(antenna_locations: AntennaLocations) -> set[Location]:
+def _find_unique_antinodes(
+    antenna_locations: AntennaLocations, row_limit: int, col_limit: int
+) -> set[Location]:
     antinodes: set[Location] = set()
     for locations in antenna_locations.values():
         for pair in combinations(locations, 2):
-            antinodes.update(_calculate_antinode_pairs(pair))
+            antinodes.update(_calculate_antinodes(pair, row_limit, col_limit))
     return antinodes
 
 
-def _calculate_antinode_pairs(
-    antenna_pair: tuple[Location, Location],
-) -> tuple[Location, Location]:
-    """Find both antinodes of a set of two antenna"""
+def _calculate_antinodes(
+    antenna_pair: tuple[Location, Location], row_limit: int, col_limit: int
+) -> list[Location]:
+    """Antinodes occur at every position in line of antenna"""
     antenna1, antenna2 = antenna_pair
     # First find the vector from antenna 1 to 2
     row_diff, col_diff = antenna2[0] - antenna1[0], antenna2[1] - antenna1[1]
-    # Antinode 1 is inverted vector applied to 1 and antinode 2 is vector applied to 2
-    antinode1 = (antenna1[0] - row_diff, antenna1[1] - col_diff)
-    antinode2 = (antenna2[0] + row_diff, antenna2[1] + col_diff)
-    return antinode1, antinode2
+
+    # Keep applying vector positivly from antenna 1 until limit is reached
+    antinodes: list[Location] = []
+    new_antinode = antenna1
+    while True:
+        new_antinode = (new_antinode[0] + row_diff, new_antinode[1] + col_diff)
+        if not 0 <= new_antinode[0] < row_limit or not 0 <= new_antinode[1] < col_limit:
+            break
+        antinodes.append(new_antinode)
+    # Then repeat negatively from antenna 2
+    new_antinode = antenna2
+    while True:
+        new_antinode = (new_antinode[0] - row_diff, new_antinode[1] - col_diff)
+        if not 0 <= new_antinode[0] < row_limit or not 0 <= new_antinode[1] < col_limit:
+            break
+        antinodes.append(new_antinode)
+    return antinodes
 
 
 def main():
     map = _load_map(INPUT)
     antenna_locations = _get_antenna_locations(map)
-    antinode_locations = _find_unique_antinodes(antenna_locations)
-
-    # Filter to just locations within map bounds then count
-    map_height, map_width = len(map), len(map[0])
-    antinodes = 0
-    for row, col in antinode_locations:
-        if 0 <= row < map_height and 0 <= col < map_width:
-            antinodes += 1
-    print(antinodes)
+    antinodes = _find_unique_antinodes(antenna_locations, len(map), len(map[0]))
+    print(len(antinodes))
 
 
 if __name__ == "__main__":
