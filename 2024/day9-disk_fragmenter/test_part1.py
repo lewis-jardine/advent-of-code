@@ -79,28 +79,15 @@ def test_compact_disk_map_empty():
 
 ### find_last_digit_idx
 def test_find_last_digit_idx_valid():
-    assert find_last_digit_idx("0..11.2222..", 0) == 9
+    assert find_last_digit_idx("0..11.2222..") == 9
 
 
 def test_find_last_digit_idx_empty():
-    assert find_last_digit_idx("", 0) == None
+    assert find_last_digit_idx("") == None
 
 
 def test_find_last_digit_idx_no_digits():
-    assert find_last_digit_idx("...", 0) == None
-
-
-def test_find_last_digit_idx_valid_start():
-    assert find_last_digit_idx("011...", 2) == 2
-
-
-def test_find_last_digit_idx_empty_start():
-    assert find_last_digit_idx("011...", 3) == None
-
-
-def test_find_last_digit_idx_invalid_start():
-    with pytest.raises(ValueError):
-        find_last_digit_idx("0..11.2", 8)
+    assert find_last_digit_idx("...") == None
 
 
 ### calculate_checksum

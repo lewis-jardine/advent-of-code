@@ -1,9 +1,9 @@
 import cProfile
 import pstats
 
-# INPUT = "input.txt"
+INPUT = "input.txt"
 # INPUT = "test_input.txt"
-INPUT = "test_input2.txt"
+# INPUT = "test_input2.txt"
 
 
 def load_disk_map(filename: str) -> str:
@@ -48,8 +48,9 @@ def compact_disk_map(disk_map: str) -> str:
         print(next_free_idx, "/", len(disk_map))
         if next_free_idx == -1:  # No free space is found
             break
-        last_full_idx = find_last_digit_idx(disk_map, next_free_idx)
-        if last_full_idx is None:  # No more blocks to move
+        last_full_idx = find_last_digit_idx(disk_map)
+        # None idx = no digits present, full idx < free idx = disk compacted
+        if last_full_idx is None or last_full_idx < next_free_idx:
             break
         disk_map = (
             disk_map[:next_free_idx]
@@ -61,26 +62,18 @@ def compact_disk_map(disk_map: str) -> str:
     return disk_map
 
 
-def find_last_digit_idx(disk_map: str, start_idx: int) -> int | None:
+def find_last_digit_idx(disk_map: str) -> int | None:
     """
-    input:
-        disk_map in format "00...1.222..."
-        int idx to start search from
+    input: disk_map in format "00...1.222..."
 
     output: idx of last digit in disk_map (e.g. 9 in input example) or
-    None if no digits in disk_map or after start_idx
+    None if no digits in disk_map
     """
-    if start_idx != 0 and start_idx >= len(disk_map):
-        raise ValueError("start_idx must be smaller than disk_map's size")
-    disk_map = disk_map[start_idx:]
-    last_idx = None
-    for idx, block in enumerate(disk_map):
-        if block != ".":
-            last_idx = idx
-    # Remember to offset by start position for accurate idx (if not None)
-    if last_idx is None:
-        return None
-    return last_idx + start_idx
+    for idx in range(len(disk_map) - 1, -1, -1):
+        if disk_map[idx] != ".":
+            # disk_map is reversed, need to get idx of opposing side instead
+            return idx
+    return None
 
 
 def calculate_checksum(disk_map: str) -> int:
