@@ -7,10 +7,10 @@ import (
 )
 
 func main() {
-	// input := readInput("../input.txt")
-	input := readInput("../test.txt")
-	// solution := solve(input)
-	fmt.Println(input)
+	input := readInput("../input.txt")
+	// input := readInput("../test.txt")
+	solution := solve(input)
+	fmt.Println(input, solution)
 }
 
 func readInput(inputPath string) *Grid {
@@ -84,6 +84,52 @@ func (g *Grid) String() (out string) {
 	return out
 }
 
+func (g *Grid) Simulate() error {
+	// We set other tiles to beam based on the current tile value
+	// Ignore the last row to avoid idx err
+	for row, rowTiles := range g.tiles[:g.Height()-1] {
+		for col, tile := range rowTiles {
+			switch tile {
+			case start, beam:
+				// Set tile below to beam if empty
+				if err := g.setBeam(row+1, col); err != nil {
+					return fmt.Errorf("Simulate: %w", err)
+				}
+			case splitter:
+				// Set tiles left, right on level and one tile down from splitter
+				if err := g.setBeam(row, col-1); err != nil {
+					return fmt.Errorf("Simulate: %w", err)
+				}
+				if err := g.setBeam(row+1, col-1); err != nil {
+					return fmt.Errorf("Simulate: %w", err)
+				}
+				if err := g.setBeam(row, col+1); err != nil {
+					return fmt.Errorf("Simulate: %w", err)
+				}
+				if err := g.setBeam(row+1, col+1); err != nil {
+					return fmt.Errorf("Simulate: %w", err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Sets a tile to beam ONLY if that tile is empty. Don't alert if not empty
+func (g *Grid) setBeam(row, col int) error {
+	tile, err := g.Get(row, col)
+	if err != nil {
+		return fmt.Errorf("SetBeam: %w", err)
+	}
+
+	if tile == empty {
+		if err := g.Set(row, col, beam); err != nil {
+			return fmt.Errorf("SetBeam: %w", err)
+		}
+	}
+	return nil
+}
+
 func parseLine(line string) ([]Tile, error) {
 	out := make([]Tile, len(line))
 
@@ -124,27 +170,25 @@ func (tile Tile) String() string {
 	return tileToString[tile]
 }
 
-// func solve(problems [][]Tile) (total int) {
-// 	for _, problem := range problems {
-// 		total += solveProblem(problem)
-// 	}
-// 	return total
-// }
-
-// Parser will build problems out of 1+ lines of whitespace seperated operands and 1 line
-// of whitespace seperated operators. The problems slice will only be built when the parser
-// is provided an operator line and valid operands have been provided.
-// type Parser struct {
-// 	problems    []Problem
-// 	allOperands [][]int
-// }
-
-// Feed lines of operands or operators into parser. Build problems if an operator line is provided.
-// func (p *Parser) parseLine(line string) error {
-// 	splitLine := strings.Fields(line)
-
-// 	return nil
-// }
+func solve(g *Grid) (total int) {
+	g.Simulate()
+	// Count splitters with a beam above (aka beam has been split here)
+	for row, rowTiles := range g.tiles {
+		if row == 0 { // Avoid row OOB from tileAbove get
+			continue
+		}
+		for col, tile := range rowTiles {
+			tileAbove, err := g.Get(row-1, col)
+			if err != nil {
+				panic(fmt.Errorf("solve: %w", err))
+			}
+			if tile == splitter && tileAbove == beam {
+				total++
+			}
+		}
+	}
+	return total
+}
 
 func checkErr(e error) {
 	if e != nil {

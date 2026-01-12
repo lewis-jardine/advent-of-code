@@ -25,3 +25,76 @@ func TestParseLineInvalid(t *testing.T) {
 		t.Error("Expected error but recieved nil")
 	}
 }
+
+func TestGridSimulate(t *testing.T) {
+	grid := &Grid{
+		tiles: [][]Tile{
+			{empty, start, empty},
+			{empty, empty, empty},
+			{empty, splitter, empty},
+			{empty, empty, empty},
+		},
+	}
+
+	exp := [][]Tile{
+		{empty, start, empty},
+		{empty, beam, empty},
+		{beam, splitter, beam},
+		{beam, empty, beam},
+	}
+
+	err := grid.Simulate()
+
+	if !reflect.DeepEqual(grid.tiles, exp) {
+		t.Errorf("expected: \n%v	recieved: \n%v", &Grid{exp}, grid)
+	}
+	if err != nil {
+		t.Errorf("Expected no error but received: %v", err)
+	}
+}
+
+func TestSetBeamEmpty(t *testing.T) {
+	grid := &Grid{
+		tiles: [][]Tile{
+			{empty, start},
+			{empty, empty},
+		},
+	}
+
+	exp := [][]Tile{
+		{beam, start},
+		{empty, empty},
+	}
+
+	err := grid.setBeam(0, 0)
+
+	if !reflect.DeepEqual(grid.tiles, exp) {
+		t.Errorf("expected: \n%v	recieved: \n%v", &Grid{exp}, grid)
+	}
+	if err != nil {
+		t.Errorf("Expected no error but received: %v", err)
+	}
+}
+
+func TestSetBeamFilled(t *testing.T) {
+	grid := &Grid{
+		tiles: [][]Tile{
+			{splitter, start},
+			{empty, empty},
+		},
+	}
+
+	exp := [][]Tile{
+		{splitter, start},
+		{empty, empty},
+	}
+
+	err := grid.setBeam(0, 0)
+
+	if !reflect.DeepEqual(grid.tiles, exp) {
+		t.Errorf("expected: \n%v	recieved: \n%v", &Grid{exp}, grid)
+	}
+	if err != nil {
+		t.Errorf("Expected no error but received: %v", err)
+	}
+}
